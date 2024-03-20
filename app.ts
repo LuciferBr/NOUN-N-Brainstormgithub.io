@@ -1,35 +1,87 @@
-// Add event listeners and functionality here
+// App.js
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+import axios from 'axios';
 
-// Dummy data for posts
-const posts = [
-    { id: 1, content: "This is my first post!" },
-    { id: 2, content: "Just another day on social media." },
-    { id: 3, content: "Feeling excited about this project!" }
-];
+const Container = styled.div`
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+`;
 
-// Function to display posts
-function displayPosts() {
-    const postSection = document.getElementById('posts');
-    postSection.innerHTML = '';
-    posts.forEach(post => {
-        const postElement = document.createElement('div');
-        postElement.classList.add('post');
-        postElement.innerHTML = `<p>${post.content}</p>`;
-        postSection.appendChild(postElement);
-    });
-}
+const PostForm = styled.form`
+    margin-bottom: 20px;
+`;
 
-// Function to handle post submission
-function submitPost() {
-    const postContent = document.getElementById('post-content').value;
-    const newPost = { id: posts.length + 1, content: postContent };
-    posts.push(newPost);
-    displayPosts();
-    // You can send the new post data to the server here for storage
-}
+const Textarea = styled.textarea`
+    width: 100%;
+    margin-bottom: 10px;
+`;
 
-// Event listeners
-document.getElementById('submit-post').addEventListener('click', submitPost);
+const Button = styled.button`
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+`;
 
-// Initial display of posts
-displayPosts();
+const Post = styled.div`
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+`;
+
+const App = () => {
+    const [posts, setPosts] = useState([]);
+    const [postContent, setPostContent] = useState('');
+
+    useEffect(() => {
+        fetchPosts();
+    }, []);
+
+    const fetchPosts = async () => {
+        try {
+            const response = await axios.get('/api/posts');
+            setPosts(response.data.posts);
+        } catch (error) {
+            console.error('Error fetching posts:', error);
+        }
+    };
+
+    const handlePostSubmit = async (event) => {
+        event.preventDefault();
+        if (postContent.trim() !== '') {
+            try {
+                await axios.post('/api/posts', { content: postContent });
+                fetchPosts();
+                setPostContent('');
+            } catch (error) {
+                console.error('Error creating post:', error);
+            }
+        } else {
+            alert('Please enter something to post.');
+        }
+    };
+
+    return (
+        <Container>
+            <h1>Amazing Social Media App</h1>
+            <PostForm onSubmit={handlePostSubmit}>
+                <Textarea
+                    value={postContent}
+                    onChange={(event) => setPostContent(event.target.value)}
+                    placeholder="What's on your mind?"
+                />
+                <Button type="submit">Post</Button>
+            </PostForm>
+            {posts.map((post, index) => (
+                <Post key={index}>
+                    <p>{post.content}</p>
+                </Post>
+            ))}
+        </Container>
+    );
+};
+
+export default App;
